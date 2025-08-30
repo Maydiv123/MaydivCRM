@@ -181,7 +181,33 @@ app.get('/api/v1/seo/page/:pagePath', async (req, res) => {
 
 app.post('/api/v1/seo', async (req, res) => {
   try {
-    const { page, data } = req.body;
+    console.log('POST /api/v1/seo - Received body:', req.body);
+    
+    let page, data;
+    
+    // Handle both data formats: {page, data} and direct SEO data
+    if (req.body.page && req.body.data) {
+      // Legacy format: {page, data}
+      page = req.body.page;
+      data = req.body.data;
+    } else if (req.body.pagePath) {
+      // Direct format: SEO data object
+      page = req.body.pagePath;
+      data = {
+        title: req.body.title || req.body.pageTitle || req.body.metaTitle,
+        description: req.body.description || req.body.metaDescription,
+        content: req.body.content || '',
+        keywords: req.body.keywords || '',
+        ogImage: req.body.ogImage || 'https://maydiv.com/og-image.jpg',
+        noIndex: req.body.noIndex || false
+      };
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid data format. Expected {page, data} or direct SEO data with pagePath'
+      });
+    }
+    
     const db = getDatabase();
     
     // Check if data already exists for this page
@@ -198,8 +224,9 @@ app.post('/api/v1/seo', async (req, res) => {
         WHERE pagePath = ?
       `).run(
         data.title || '', data.title || '', data.description || '', data.content || '', data.keywords || '',
-        `https://maydiv.com${page}`, data.title || '', data.description || '', 'https://maydiv.com/og-image.jpg',
-        data.title || '', data.description || '', 'https://maydiv.com/og-image.jpg', 'index, follow', 85,
+        `https://maydiv.com${page}`, data.title || '', data.description || '', data.ogImage || 'https://maydiv.com/og-image.jpg',
+        data.title || '', data.description || '', data.ogImage || 'https://maydiv.com/og-image.jpg', 
+        data.noIndex ? 'noindex, nofollow' : 'index, follow', 85,
         page
       );
       
@@ -223,11 +250,11 @@ app.post('/api/v1/seo', async (req, res) => {
       const canonicalUrl = `https://maydiv.com${page}`;
       const ogTitle = data.title || '';
       const ogDescription = data.description || '';
-      const ogImage = 'https://maydiv.com/og-image.jpg';
+      const ogImage = data.ogImage || 'https://maydiv.com/og-image.jpg';
       const twitterTitle = data.title || '';
       const twitterDescription = data.description || '';
-      const twitterImage = 'https://maydiv.com/og-image.jpg';
-      const robots = 'index, follow';
+      const twitterImage = data.ogImage || 'https://maydiv.com/og-image.jpg';
+      const robots = data.noIndex ? 'noindex, nofollow' : 'index, follow';
       const seoScore = 85;
       
       const result = db.prepare(`
