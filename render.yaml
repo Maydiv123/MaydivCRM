@@ -11,6 +11,6 @@ services:
       - key: PORT
         value: 10000
       - key: CORS_ORIGIN
-        value: https://maydiv.com
+        value: https://www.maydiv.com
     healthCheckPath: /health
     autoDeploy: true
