@@ -41,7 +41,7 @@ app.use(cors({
   origin: ['https://www.maydiv.com', 'https://maydiv-maydiv123s-projects.vercel.app', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control', 'Expires', 'Pragma']
 }));
 
 // Rate limiting
