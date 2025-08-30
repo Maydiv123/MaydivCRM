@@ -8,11 +8,25 @@ const initializeDatabase = async () => {
     // Open database connection
     db = new Database(path.join(__dirname, '../data/maydiv.db'));
 
+    // Check if old table exists with UNIQUE constraint
+    try {
+      const tableInfo = db.prepare("PRAGMA table_info(seo)").all();
+      const hasUniqueConstraint = tableInfo.some(col => col.name === 'pagePath' && col.notnull === 1);
+      
+      if (hasUniqueConstraint) {
+        console.log('Recreating table to remove UNIQUE constraint...');
+        // Drop old table and recreate
+        db.exec('DROP TABLE IF EXISTS seo');
+      }
+    } catch (error) {
+      // Table doesn't exist, continue
+    }
+
     // Create seo table if it doesn't exist
     db.exec(`
       CREATE TABLE IF NOT EXISTS seo (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        pagePath TEXT UNIQUE NOT NULL,
+        pagePath TEXT NOT NULL,
         pageTitle TEXT NOT NULL,
         metaTitle TEXT NOT NULL,
         metaDescription TEXT NOT NULL,
