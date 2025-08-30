@@ -181,25 +181,25 @@ app.get('/api/v1/seo/page/:pagePath', async (req, res) => {
 
 app.post('/api/v1/seo', async (req, res) => {
   try {
-    const {
-      pagePath,
-      pageTitle,
-      metaTitle,
-      metaDescription,
-      content,
-      keywords,
-      canonicalUrl,
-      ogTitle,
-      ogDescription,
-      ogImage,
-      twitterTitle,
-      twitterDescription,
-      twitterImage,
-      robots,
-      seoScore
-    } = req.body;
-
+    const { page, data } = req.body;
     const db = getDatabase();
+    
+    // Map frontend data to database columns
+    const pagePath = page;
+    const pageTitle = data.title || '';
+    const metaTitle = data.title || '';
+    const metaDescription = data.description || '';
+    const content = data.content || '';
+    const keywords = data.keywords || '';
+    const canonicalUrl = `https://maydiv.com${page}`;
+    const ogTitle = data.title || '';
+    const ogDescription = data.description || '';
+    const ogImage = 'https://maydiv.com/og-image.jpg';
+    const twitterTitle = data.title || '';
+    const twitterDescription = data.description || '';
+    const twitterImage = 'https://maydiv.com/og-image.jpg';
+    const robots = 'index, follow';
+    const seoScore = 85;
     
     const result = db.prepare(`
       INSERT INTO seo (
@@ -211,7 +211,7 @@ app.post('/api/v1/seo', async (req, res) => {
     `).run(
       pagePath, pageTitle, metaTitle, metaDescription, content, keywords,
       canonicalUrl, ogTitle, ogDescription, ogImage,
-      twitterTitle, twitterDescription, twitterImage, robots, seoScore || 0
+      twitterTitle, twitterDescription, twitterImage, robots, seoScore
     );
 
     // Get the created record
@@ -220,7 +220,8 @@ app.post('/api/v1/seo', async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'SEO data created successfully',
-      seoData: createdRecord
+      seoData: createdRecord,
+      pagePath: pagePath
     });
   } catch (error) {
     console.error('Error creating SEO data:', error);
