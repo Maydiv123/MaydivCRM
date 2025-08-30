@@ -184,47 +184,77 @@ app.post('/api/v1/seo', async (req, res) => {
     const { page, data } = req.body;
     const db = getDatabase();
     
-    // Map frontend data to database columns
-    const pagePath = page;
-    const pageTitle = data.title || '';
-    const metaTitle = data.title || '';
-    const metaDescription = data.description || '';
-    const content = data.content || '';
-    const keywords = data.keywords || '';
-    const canonicalUrl = `https://maydiv.com${page}`;
-    const ogTitle = data.title || '';
-    const ogDescription = data.description || '';
-    const ogImage = 'https://maydiv.com/og-image.jpg';
-    const twitterTitle = data.title || '';
-    const twitterDescription = data.description || '';
-    const twitterImage = 'https://maydiv.com/og-image.jpg';
-    const robots = 'index, follow';
-    const seoScore = 85;
+    // Check if data already exists for this page
+    const existingData = db.prepare('SELECT * FROM seo WHERE pagePath = ?').get(page);
     
-    const result = db.prepare(`
-      INSERT INTO seo (
-        pagePath, pageTitle, metaTitle, metaDescription, content, keywords, 
-        canonicalUrl, ogTitle, ogDescription, ogImage, 
-        twitterTitle, twitterDescription, twitterImage, robots, seoScore,
-        isPublished, createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    `).run(
-      pagePath, pageTitle, metaTitle, metaDescription, content, keywords,
-      canonicalUrl, ogTitle, ogDescription, ogImage,
-      twitterTitle, twitterDescription, twitterImage, robots, seoScore
-    );
+    if (existingData) {
+      // Update existing data
+      const result = db.prepare(`
+        UPDATE seo SET 
+          pageTitle = ?, metaTitle = ?, metaDescription = ?, content = ?, keywords = ?,
+          canonicalUrl = ?, ogTitle = ?, ogDescription = ?, ogImage = ?,
+          twitterTitle = ?, twitterDescription = ?, twitterImage = ?, robots = ?, seoScore = ?,
+          isPublished = 1, updatedAt = CURRENT_TIMESTAMP
+        WHERE pagePath = ?
+      `).run(
+        data.title || '', data.title || '', data.description || '', data.content || '', data.keywords || '',
+        `https://maydiv.com${page}`, data.title || '', data.description || '', 'https://maydiv.com/og-image.jpg',
+        data.title || '', data.description || '', 'https://maydiv.com/og-image.jpg', 'index, follow', 85,
+        page
+      );
+      
+      // Get the updated record
+      const updatedRecord = db.prepare('SELECT * FROM seo WHERE pagePath = ?').get(page);
+      
+      res.status(200).json({
+        success: true,
+        message: 'SEO data updated successfully',
+        seoData: updatedRecord,
+        pagePath: page
+      });
+    } else {
+      // Insert new data
+      const pagePath = page;
+      const pageTitle = data.title || '';
+      const metaTitle = data.title || '';
+      const metaDescription = data.description || '';
+      const content = data.content || '';
+      const keywords = data.keywords || '';
+      const canonicalUrl = `https://maydiv.com${page}`;
+      const ogTitle = data.title || '';
+      const ogDescription = data.description || '';
+      const ogImage = 'https://maydiv.com/og-image.jpg';
+      const twitterTitle = data.title || '';
+      const twitterDescription = data.description || '';
+      const twitterImage = 'https://maydiv.com/og-image.jpg';
+      const robots = 'index, follow';
+      const seoScore = 85;
+      
+      const result = db.prepare(`
+        INSERT INTO seo (
+          pagePath, pageTitle, metaTitle, metaDescription, content, keywords, 
+          canonicalUrl, ogTitle, ogDescription, ogImage, 
+          twitterTitle, twitterDescription, twitterImage, robots, seoScore,
+          isPublished, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `).run(
+        pagePath, pageTitle, metaTitle, metaDescription, content, keywords,
+        canonicalUrl, ogTitle, ogDescription, ogImage,
+        twitterTitle, twitterDescription, twitterImage, robots, seoScore
+      );
 
-    // Get the created record
-    const createdRecord = db.prepare('SELECT * FROM seo WHERE id = ?').get(result.lastInsertRowid);
+      // Get the created record
+      const createdRecord = db.prepare('SELECT * FROM seo WHERE id = ?').get(result.lastInsertRowid);
 
-    res.status(201).json({
-      success: true,
-      message: 'SEO data created successfully',
-      seoData: createdRecord,
-      pagePath: pagePath
-    });
+      res.status(201).json({
+        success: true,
+        message: 'SEO data created successfully',
+        seoData: createdRecord,
+        pagePath: pagePath
+      });
+    }
   } catch (error) {
-    console.error('Error creating SEO data:', error);
+    console.error('Error saving SEO data:', error);
     res.status(500).json({
       success: false,
       error: error.message
