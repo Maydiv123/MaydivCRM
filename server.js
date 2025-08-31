@@ -38,36 +38,10 @@ app.use(helmet({
 
 // CORS configuration
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    const allowedOrigins = [
-      'https://www.maydiv.com', 
-      'https://maydiv-maydiv123s-projects.vercel.app', 
-      'https://maydiv-maydiv123s-projects.vercel.app',
-      'http://localhost:3000',
-      'https://vercel.app',
-      'https://*.vercel.app'
-    ];
-    
-    // Check if origin is allowed
-    if (allowedOrigins.some(allowed => origin.includes(allowed.replace('*', '')))) {
-      return callback(null, true);
-    }
-    
-    // Allow all Vercel preview deployments
-    if (origin.includes('vercel.app') || origin.includes('vercel.com')) {
-      return callback(null, true);
-    }
-    
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: ['https://www.maydiv.com', 'https://maydiv-maydiv123s-projects.vercel.app', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control', 'Expires', 'Pragma'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control', 'Expires', 'Pragma']
 }));
 
 // Rate limiting
